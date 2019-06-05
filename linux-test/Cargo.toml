@@ -1,0 +1,17 @@
+[package]
+name = "linux-test"
+version = "0.1.0"
+authors = ["Gonzalo Brito Gadeschi <gonzalobg88@gmail.com>"]
+build = "build.rs"
+
+[dependencies.linux]
+path = ".."
+default-features = false
+
+[build-dependencies]
+ctest = "0.2"
+
+[[test]]
+name = "main"
+path = "test/main.rs"
+harness = false

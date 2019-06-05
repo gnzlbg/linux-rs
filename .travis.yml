@@ -1,0 +1,80 @@
+language: rust
+rust: nightly
+sudo: required
+dist: xenial
+services: docker
+
+matrix:
+  include:
+    - name: "Tools"
+      env: TARGET=x86_64-unknown-linux-gnu
+      install:
+        - travis_retry rustup component add rust-src
+        - travis_retry cargo install xargo
+        - shellcheck --version
+      script:
+        - shellcheck -e SC2103 ci/*.sh
+        - |
+          if rustup component add rustfmt ; then
+              cargo fmt --all -- --check
+          fi
+        - |
+          if rustup component add clippy ; then
+              cargo fmt --all -- --check
+          fi
+        - sh ci/dox.sh
+        # FIXME: Semver LINUX
+    
+    # BUILD stable, beta, nightly, 1.13.0
+    - name: "Build Stable Rust"
+      script: sh ci/build.sh
+      rust: stable
+      install: true
+    - name: "Build Beta Rust"
+      script: sh ci/build.sh
+      rust: beta
+      install: true
+    - name: "Build Nightly Rust"
+      script: sh ci/build.sh
+      rust: nightly
+      install:
+        - travis_retry rustup component add rust-src
+        - travis_retry cargo install xargo
+    - name: "Build Stable Rust 1.13.0"
+      script: sh ci/build.sh
+      rust: 1.13.0
+      install: true
+ 
+    - env: TARGET=x86_64-unknown-linux-gnu
+      install: true
+    - env: TARGET=i686-unknown-linux-gnu
+    - env: TARGET=aarch64-linux-android
+    - env: TARGET=aarch64-unknown-linux-gnu
+    - env: TARGET=arm-linux-androideabi
+    - env: TARGET=arm-unknown-linux-gnueabihf
+    - env: TARGET=asmjs-unknown-emscripten
+    - env: TARGET=i686-linux-android
+    - env: TARGET=mips-unknown-linux-gnu
+    - env: TARGET=mips64-unknown-linux-gnuabi64
+    - env: TARGET=mips64el-unknown-linux-gnuabi64
+    - env: TARGET=powerpc-unknown-linux-gnu
+    - env: TARGET=powerpc64-unknown-linux-gnu
+    - env: TARGET=powerpc64le-unknown-linux-gnu
+    - env: TARGET=s390x-unknown-linux-gnu
+    - env: TARGET=sparc64-unknown-linux-gnu
+    - env: TARGET=wasm32-unknown-emscripten
+    - env: TARGET=x86_64-linux-android
+    - env: TARGET=x86_64-unknown-linux-gnux32 OPT="--release"
+
+install: travis_retry rustup target add $TARGET
+script:
+  - cargo generate-lockfile --manifest-path libc-test/Cargo.toml
+  - if [[ $TRAVIS_OS_NAME = "linux" ]] && [[ $BUILD_ONLY != "1" ]]; then
+      sh ci/run-docker.sh $TARGET;
+    else
+      sh ci/run.sh $TARGET;
+    fi
+
+notifications:
+  email:
+    on_success: never
