@@ -43,25 +43,25 @@ if [ "$QEMU" != "" ]; then
   # Create a mount a fresh new filesystem image that we'll later pass to QEMU.
   # This will have a `run.sh` script will which use the artifacts inside to run
   # on the host.
-  rm -f "${tmpdir}/libc-test.img"
+  rm -f "${tmpdir}/linux-test.img"
   mkdir "${tmpdir}/mount"
 
   # Do the standard rigamarole of cross-compiling an executable and then the
   # script to run just executes the binary.
   cargo build \
-    --manifest-path libc-test/Cargo.toml \
+    --manifest-path linux-test/Cargo.toml \
     --target "${TARGET}" \
     --test main
   rm "${CARGO_TARGET_DIR}/${TARGET}"/debug/main-*.d
-  cp "${CARGO_TARGET_DIR}/${TARGET}"/debug/main-* "${tmpdir}"/mount/libc-test
+  cp "${CARGO_TARGET_DIR}/${TARGET}"/debug/main-* "${tmpdir}"/mount/linux-test
   # shellcheck disable=SC2016
-  echo 'exec $1/libc-test' > "${tmpdir}/mount/run.sh"
+  echo 'exec $1/linux-test' > "${tmpdir}/mount/run.sh"
 
   du -sh "${tmpdir}/mount"
   genext2fs \
       --root "${tmpdir}/mount" \
       --size-in-blocks 100000 \
-      "${tmpdir}/libc-test.img"
+      "${tmpdir}/linux-test.img"
 
   # Pass -snapshot to prevent tampering with the disk images, this helps when
   # running this script in development. The two drives are then passed next,
@@ -72,7 +72,7 @@ if [ "$QEMU" != "" ]; then
     -m 1024 \
     -snapshot \
     -drive if=virtio,file="${tmpdir}/${qemufile}" \
-    -drive if=virtio,file="${tmpdir}/libc-test.img" \
+    -drive if=virtio,file="${tmpdir}/linux-test.img" \
     -net nic,model=virtio \
     -net user \
     -nographic \
@@ -89,10 +89,10 @@ fi
 
 export LIBC_CI=1
 
-cargo test -vv $opt --no-default-features --manifest-path libc-test/Cargo.toml \
+cargo test -vv $opt --no-default-features --manifest-path linux-test/Cargo.toml \
       --target "${TARGET}"
 
-cargo test -vv $opt --manifest-path libc-test/Cargo.toml --target "${TARGET}"
+cargo test -vv $opt --manifest-path linux-test/Cargo.toml --target "${TARGET}"
 
-cargo test -vv $opt --features extra_traits --manifest-path libc-test/Cargo.toml \
+cargo test -vv $opt --features extra_traits --manifest-path linux-test/Cargo.toml \
       --target "${TARGET}"

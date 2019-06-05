@@ -108,13 +108,13 @@ With all that in mind, the way BSD is tested looks like:
 3. Generate a disk image which will later be mounted by the OS being tested.
    This image is mostly just the libc directory, but some modifications are made
    to compile the generated files from step 2.
-4. The kernel is booted in QEMU, and it is configured to detect the libc-test
+4. The kernel is booted in QEMU, and it is configured to detect the linux-test
    image being available, run the test script, and then shut down afterwards.
 5. Look for whether the tests passed in the serial console output of the kernel.
 
 There's some pretty specific instructions for setting up each image (detailed
 below), but the main gist of this is that we must avoid a vanilla `cargo run`
-inside of the `libc-test` directory (which is what it's intended for) because
+inside of the `linux-test` directory (which is what it's intended for) because
 that would compile `syntex_syntax`, a large library, with userspace emulation.
 This invariably times out on Travis, so we can't do that.
 
